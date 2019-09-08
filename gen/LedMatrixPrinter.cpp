@@ -1,0 +1,52 @@
+#include "LedMatrixPrinter.hpp"
+
+// From https://github.com/dhepper/font8x8
+const uint8_t LedMatrixPrinter::FONT[11][8] = {    
+    { 0x3E, 0x63, 0x73, 0x7B, 0x6F, 0x67, 0x3E, 0x00},   // U+0030 (0)
+    { 0x0C, 0x0E, 0x0C, 0x0C, 0x0C, 0x0C, 0x3F, 0x00},   // U+0031 (1)
+    { 0x1E, 0x33, 0x30, 0x1C, 0x06, 0x33, 0x3F, 0x00},   // U+0032 (2)
+    { 0x1E, 0x33, 0x30, 0x1C, 0x30, 0x33, 0x1E, 0x00},   // U+0033 (3)
+    { 0x38, 0x3C, 0x36, 0x33, 0x7F, 0x30, 0x78, 0x00},   // U+0034 (4)
+    { 0x3F, 0x03, 0x1F, 0x30, 0x30, 0x33, 0x1E, 0x00},   // U+0035 (5)
+    { 0x1C, 0x06, 0x03, 0x1F, 0x33, 0x33, 0x1E, 0x00},   // U+0036 (6)
+    { 0x3F, 0x33, 0x30, 0x18, 0x0C, 0x0C, 0x0C, 0x00},   // U+0037 (7)
+    { 0x1E, 0x33, 0x33, 0x1E, 0x33, 0x33, 0x1E, 0x00},   // U+0038 (8)
+    { 0x1E, 0x33, 0x33, 0x3E, 0x30, 0x18, 0x0E, 0x00},   // U+0039 (9)
+    { 0x00, 0x0C, 0x0C, 0x00, 0x00, 0x0C, 0x0C, 0x00}    // U+003A (:)
+};
+
+LedMatrixPrinter::LedMatrixPrinter(LedControl& tLedControl) :
+  mLedControl(tLedControl)
+{
+  clear();
+}
+void LedMatrixPrinter::addChar(char tChar,
+                               uint8_t tPosition)
+{
+  if (tChar < '0' || 
+      tChar > ':' ||
+      tPosition >= 32)
+  {
+    // Unsupported char or position out of bounds
+    return;
+  }
+
+  for (uint8_t i = 0; i < 8; ++i)
+  {
+    mMatrix[i] |= (static_cast<uint32_t>(FONT[tChar - '0'][7 - i])) << tPosition;
+  }
+}
+void LedMatrixPrinter::print()
+{
+  for (int i = 0; i < 8; i++)  
+  {
+    mLedControl.setRow(0,i,static_cast<uint8_t>(mMatrix[i] & 0xFF));
+    mLedControl.setRow(1,i,static_cast<uint8_t>((mMatrix[i] >> 8) & 0xFF));
+    mLedControl.setRow(2,i,static_cast<uint8_t>((mMatrix[i] >> 16) & 0xFF));
+    mLedControl.setRow(3,i,static_cast<uint8_t>((mMatrix[i] >> 24) & 0xFF));
+  }
+}
+void LedMatrixPrinter::clear()
+{
+  memset(mMatrix, 0, sizeof(mMatrix));
+}
